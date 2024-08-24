@@ -64,11 +64,12 @@ class TornMonitor(commands.Cog):
                         previous_total_price = previous_total_prices[user_id]
                         if current_total_price < previous_total_price:
                             difference = previous_total_price - current_total_price
-                            channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace with your channel name
-                            if channel:
-                                await channel.send(f"User {user_id}: Items were purchased! Total spent: {difference}")
-                            else:
-                                print("Channel not found.")
+                            if difference > 3000000
+                                channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace with your channel name
+                                if channel:
+                                    await channel.send(f"User {user_id}: Items were purchased! Total spent: {difference}")
+                                else:
+                                    print("Channel not found.")
                         else:
                             print(f"User {user_id}: No purchases detected.")
                     else:
