@@ -66,12 +66,17 @@ class TornMonitor(commands.Cog):
     async def current_price(self, ctx, user_id: str):
         """Fetches and displays the current total price for a specific user."""
         previous_total_prices = await self.config.previous_total_prices()
-        current_total_price = previous_total_prices.get(user_id, None)
-
-        if current_total_price is not None:
+        
+        # Print the current stored prices for debugging
+        print("Stored prices:", previous_total_prices)
+        
+        # Check if the user_id is in the stored prices
+        if user_id in previous_total_prices:
+            current_total_price = previous_total_prices[user_id]
             await ctx.send(f"User {user_id}: Current total price is {current_total_price}.")
         else:
             await ctx.send(f"No data found for user {user_id}.")
+
 
     @mug.command(name="help")
     async def help_command(self, ctx):
