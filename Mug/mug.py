@@ -87,7 +87,8 @@ class TornMonitor(commands.Cog):
                 channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
                 if channel:
                     mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
-                    message = (f"Player {data.get("profile",{}.get("name", {}))}: Available money on hand is {current_total_price}. [Mug]({mug_link})")
+                    message = (f"Player {data.get('profile', {}).get('name', 'Unknown')}: "
+                               f"Available money on hand is {current_total_price}. [Mug]({mug_link})")
 
                     if seconds_since_last_action is not None:
                         message += f" Last action was {seconds_since_last_action} seconds ago."
@@ -117,7 +118,8 @@ class TornMonitor(commands.Cog):
             await asyncio.sleep(2)  # Check every 2 seconds
 
     def cog_unload(self):
-        self._task.cancel()
+        if hasattr(self, '_task') and self._task:
+            self._task.cancel()
 
     @commands.Cog.listener()
     async def on_ready(self):
