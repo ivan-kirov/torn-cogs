@@ -3,14 +3,14 @@
     "short": "An advanced bot to track mug targets.",
     "description": "An advanced bot to track target's bazaar sales to potentially mug them.",
     "end_user_data_statement": "This cog does not store end user data.",
-    "install_msg": "Thanks for installing Prile's advanced TornMugAdviser.\n\nIf you come across any errors please report them :)",
+    "install_msg": "Thanks for installing Peekaboo's advanced TornMugAdviser.\n\nIf you come across any errors please report them :)",
     "author": [
-        "Prile"
+        "Peekaboo"
     ],
     "required_cogs": {},
     "requirements": ["discord", "requests"],
     "tags": ["utility", "bazaar tracking"],
-    "min_bot_version": "1.0",
+    "min_bot_version": "1.1",
     "hidden": false,
     "disabled": false,
     "type": "COG"
