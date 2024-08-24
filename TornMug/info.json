@@ -1,0 +1,17 @@
+{
+    "name": "TornMugAdviser",
+    "short": "An advanced bot to track mug targets.",
+    "description": "An advanced bot to track target's bazaar sales to potentially mug them.",
+    "end_user_data_statement": "This cog does not store end user data.",
+    "install_msg": "Thanks for installing Prile's advanced TornMugAdviser.\n\nIf you come across any errors please report them :)",
+    "author": [
+        "Prile"
+    ],
+    "required_cogs": {},
+    "requirements": ["discord", "requests", "asyncio"],
+    "tags": ["utility", "bazaar tracking"],
+    "min_bot_version": "1.0",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
