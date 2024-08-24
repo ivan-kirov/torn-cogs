@@ -10,7 +10,7 @@
     "required_cogs": {},
     "requirements": ["discord", "requests"],
     "tags": ["utility", "bazaar tracking"],
-    "min_bot_version": "1.2",
+    "min_bot_version": "1.3",
     "hidden": false,
     "disabled": false,
     "type": "COG"
