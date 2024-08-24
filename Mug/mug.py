@@ -1,18 +1,29 @@
 import discord
-from redbot.core import commands, Config, checks
+from redbot.core import commands, checks
 import requests
 import asyncio
 import time
+import json
+import os
+
+USER_DATA_FILE = "user_data.json"
+
+def load_json(filename):
+    if os.path.exists(filename):
+        with open(filename, "r") as file:
+            return json.load(file)
+    return {}
+
+def save_json(data, filename):
+    with open(filename, "w") as file:
+        json.dump(data, file, indent=4)
 
 class TornMonitor(commands.Cog):
     """Cog for monitoring Torn API purchases."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Unique identifier for storing settings
-        self.config.register_global(previous_total_prices={})  # Global configuration for previous total prices
-        self.config.register_global(user_ids=[])  # Global configuration for user IDs to monitor
-        self.config.register_global(api_key=None)  # Global configuration for the Torn API key
+        self.user_data = load_json(USER_DATA_FILE)  # Load existing data
 
     @commands.group()
     async def mug(self, ctx):
@@ -24,33 +35,36 @@ class TornMonitor(commands.Cog):
     @checks.is_owner()
     async def setapikey(self, ctx, api_key: str):
         """Sets the Torn API key."""
-        await self.config.api_key.set(api_key)
+        self.user_data['api_key'] = api_key
+        save_json(self.user_data, USER_DATA_FILE)
         await ctx.send("Torn API key has been set successfully.")
 
     @mug.command(name="add", aliases=["+"])
     async def adduser(self, ctx, user_id: str):
         """Adds a user ID to the monitoring list."""
-        async with self.config.user_ids() as user_ids:
-            if user_id not in user_ids:
-                user_ids.append(user_id)
-                await ctx.send(f"User ID {user_id} has been added to monitoring.")
-            else:
-                await ctx.send(f"User ID {user_id} is already being monitored.")
+        if 'user_ids' not in self.user_data:
+            self.user_data['user_ids'] = []
+        if user_id not in self.user_data['user_ids']:
+            self.user_data['user_ids'].append(user_id)
+            save_json(self.user_data, USER_DATA_FILE)
+            await ctx.send(f"User ID {user_id} has been added to monitoring.")
+        else:
+            await ctx.send(f"User ID {user_id} is already being monitored.")
 
     @mug.command(name="remove", aliases=["-"])
     async def removeuser(self, ctx, user_id: str):
         """Removes a user ID from the monitoring list."""
-        async with self.config.user_ids() as user_ids:
-            if user_id in user_ids:
-                user_ids.remove(user_id)
-                await ctx.send(f"User ID {user_id} has been removed from monitoring.")
-            else:
-                await ctx.send(f"User ID {user_id} is not being monitored.")
+        if 'user_ids' in self.user_data and user_id in self.user_data['user_ids']:
+            self.user_data['user_ids'].remove(user_id)
+            save_json(self.user_data, USER_DATA_FILE)
+            await ctx.send(f"User ID {user_id} has been removed from monitoring.")
+        else:
+            await ctx.send(f"User ID {user_id} is not being monitored.")
 
     @mug.command(name="list")
     async def listusers(self, ctx):
         """Lists all user IDs currently being monitored."""
-        user_ids = await self.config.user_ids()
+        user_ids = self.user_data.get('user_ids', [])
         if user_ids:
             await ctx.send(f"Currently monitoring the following user IDs: {', '.join(user_ids)}")
         else:
@@ -63,41 +77,18 @@ class TornMonitor(commands.Cog):
         await self.perform_check(ctx, test_user_id)
 
     @mug.command(name="bazaar")
-    async def current_price(self, ctx, user_id: str):
-        """Fetches and displays the current total price for a specific user."""
-        previous_total_prices = await self.config.previous_total_prices()
-        
-        # Print the current stored prices for debugging
-        print("Stored prices:", previous_total_prices)
-        
-        # Check if the user_id is in the stored prices
-        if user_id in previous_total_prices:
-            current_total_price = previous_total_prices[user_id]
-            await ctx.send(f"User {user_id}: Current total price is {current_total_price}.")
+    async def bazaar_price(self, ctx, user_id: str):
+        """Outputs the current total bazaar price for a specific user."""
+        previous_total_prices = self.user_data.get('previous_total_prices', {})
+        current_total_price = previous_total_prices.get(user_id)
+        if current_total_price is not None:
+            await ctx.send(f"Current total bazaar price for user {user_id} is {current_total_price}.")
         else:
             await ctx.send(f"No data found for user {user_id}.")
 
-
-    @mug.command(name="help")
-    async def help_command(self, ctx):
-        """Displays all available commands for the TornMonitor cog."""
-        help_text = (
-            "**TornMonitor Help**\n"
-            "Here are the available commands for TornMonitor:\n"
-            "\n"
-            "`!mug setapikey <api_key>` - Sets the Torn API key.\n"
-            "`!mug add <user_id>` - Adds a user ID to the monitoring list.\n"
-            "`!mug remove <user_id>` - Removes a user ID from the monitoring list.\n"
-            "`!mug list` - Lists all user IDs currently being monitored.\n"
-            "`!mug test` - Sends a test output message with a specific user ID.\n"
-            "`!mug bazaar` - Displays the bazaar total networth of a specific account."
-            "`!mug help` - Displays this help message."
-        )
-        await ctx.send(help_text)
-
     async def perform_check(self, ctx, user_id):
         """Performs the check for a given user ID and sends the result to the Discord channel."""
-        api_key = await self.config.api_key()
+        api_key = self.user_data.get('api_key')
         if not api_key:
             await ctx.send("API key is not set. Please set the API key using `!mug setapikey`.")
             return
@@ -115,16 +106,14 @@ class TornMonitor(commands.Cog):
             status = data.get("profile", {}).get("status", {}).get("state", "Unknown")
             revivable = data.get("profile", {}).get("revivable", 0)
 
-            # Retrieve previous total price from the config
-            previous_total_prices = await self.config.previous_total_prices()
-            previous_total_price = previous_total_prices.get(user_id, current_total_price)
+            previous_total_prices = self.user_data.get('previous_total_prices', {})
+            previous_total_price = previous_total_prices.get(user_id, 0)
 
             # Check if the total price has decreased
             if current_total_price < previous_total_price:
                 difference = previous_total_price - current_total_price
 
-                # Check if conditions are met
-                if difference > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
+                if current_total_price > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
                     channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
                     if channel:
                         mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
@@ -143,22 +132,22 @@ class TornMonitor(commands.Cog):
 
             # Update the previous total price
             previous_total_prices[user_id] = current_total_price
-            await self.config.previous_total_prices.set(previous_total_prices)
+            self.user_data['previous_total_prices'] = previous_total_prices
+            save_json(self.user_data, USER_DATA_FILE)
         else:
             await ctx.send(f"Could not retrieve bazaar or profile data for user {user_id}.")
-
 
     async def check_for_purchases(self):
         """Periodically checks for purchases for each user ID."""
         await self.bot.wait_until_ready()
         while True:
-            api_key = await self.config.api_key()
+            api_key = self.user_data.get('api_key')
             if not api_key:
                 print("API key is not set. Skipping Torn API checks.")
                 await asyncio.sleep(30)
                 continue
 
-            user_ids = await self.config.user_ids()
+            user_ids = self.user_data.get('user_ids', [])
             for user_id in user_ids:
                 await self.perform_check(None, user_id)  # Here, we don't have a context, so pass None
 
