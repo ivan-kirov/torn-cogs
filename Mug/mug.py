@@ -6,7 +6,7 @@ import time
 import json
 import os
 
-USER_DATA_FILE = "user_data.json"
+USER_DATA_FILE = "/home/minecraft/redenv/user_data.json"
 
 def load_json(filename):
     if os.path.exists(filename):
