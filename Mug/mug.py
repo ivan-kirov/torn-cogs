@@ -103,6 +103,9 @@ class TornMonitor(commands.Cog):
         response = requests.get(url)
         data = response.json()
 
+        # Debug statement to print the response data
+        print(f"Response data for user {user_id}: {json.dumps(data, indent=4)}")
+
         if "bazaar" in data and "name" in data:
             current_total_price = sum(item["price"] * item.get("quantity", 1) for item in data["bazaar"])
             last_action_timestamp = data.get("last_action", {}).get("timestamp", None)
@@ -114,6 +117,11 @@ class TornMonitor(commands.Cog):
 
             previous_total_prices = self.user_data.get('previous_total_prices', {})
             previous_total_price = previous_total_prices.get(user_id, 0)
+
+            # Debug statements for internal state
+            print(f"User {user_id}: Current total price = {current_total_price}, Previous total price = {previous_total_price}")
+            print(f"User {user_id}: Status = {status}, Revivable = {revivable}")
+            print(f"User {user_id}: Seconds since last action = {seconds_since_last_action}")
 
             # Check if the total price has decreased
             if current_total_price < previous_total_price:
@@ -142,6 +150,7 @@ class TornMonitor(commands.Cog):
             save_json(self.user_data, USER_DATA_FILE)
         else:
             await ctx.send(f"Could not retrieve bazaar or profile data for user {user_id}.")
+
 
     async def check_for_purchases(self):
         """Periodically checks for purchases for each user ID."""
