@@ -17,18 +17,15 @@ Set the API Key:
 
 As the bot owner, you can set the API key using:
 sh
-Copy code
 !setapikey your_torn_api_key_here
 Replace ! with your bot's command prefix.
 Add and Remove Users:
 
 Add users to monitor with:
 sh
-Copy code
 !adduser <user_id>
 Remove users from monitoring with:
 sh
-Copy code
 !removeuser <user_id>
 Run the Bot:
 
