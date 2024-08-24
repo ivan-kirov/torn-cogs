@@ -4,6 +4,8 @@ import requests
 import asyncio
 import time
 import json
+import locale
+
 
 class TornMonitor(commands.Cog):
     """Cog for monitoring Torn API purchases."""
@@ -22,6 +24,9 @@ class TornMonitor(commands.Cog):
 
         # Start the background task
         self._task = self.bot.loop.create_task(self.check_for_purchases())
+
+    # Set the desired locale (e.g., "en_US" for US English)
+    locale.setlocale(locale.LC_ALL, 'en_US')  # Replace 'en_US' with your desired locale
 
     @commands.group()
     async def mug(self, ctx):
@@ -67,16 +72,6 @@ class TornMonitor(commands.Cog):
         else:
             await ctx.send("No user IDs are currently being monitored.")
 
-    @mug.command(name="bazaar")
-    async def bazaar_price(self, ctx, user_id: str):
-        """Outputs the current total bazaar price for a specific user."""
-        previous_total_prices = self.user_data.get('previous_total_prices', {})
-        current_total_price = previous_total_prices.get(user_id)
-        if current_total_price is not None:
-            await ctx.send(f"Current total bazaar price for user {user_id} is {current_total_price}.")
-        else:
-            await ctx.send(f"No data found for user {user_id}.")
-
     async def perform_check(self, ctx, user_id):
         """Performs the check for a given user ID and sends the result to the Discord channel."""
         api_key = self.user_data.get('api_key')
@@ -117,8 +112,11 @@ class TornMonitor(commands.Cog):
                 if difference > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
                     channel = discord.utils.get(self.bot.get_all_channels(), name='torn')
                     if channel:
+                        # Format the current total price as currency
+                        formatted_price = locale.format_string('%s', current_total_price, grouping=True, thousands_sep=',')
                         mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
-                        message = (f"Player {data.get('name', 'Unknown')}: Available money on hand is {current_total_price}. [Mug]({mug_link})")
+                        # Include the formatted price in the message
+                        message = (f"Player {data.get('name', 'Unknown')}: Available money on hand is {formatted_price}. [Mug]({mug_link})")
 
                         if seconds_since_last_action is not None:
                             message += f" Last action was {seconds_since_last_action} seconds ago."
