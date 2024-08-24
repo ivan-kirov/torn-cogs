@@ -118,6 +118,8 @@ class TornMonitor(commands.Cog):
         try:
             response = requests.get(url)
             data = response.json()
+            await ctx.send(data) #added Debug to see if there is any output
+
         except requests.exceptions.RequestException as e:
             print(f"Error fetching data for user {user_id}: {e}")
             await ctx.send(f"An error occurred while fetching data for user {user_id}.")
