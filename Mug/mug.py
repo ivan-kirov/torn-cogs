@@ -62,6 +62,22 @@ class TornMonitor(commands.Cog):
         test_user_id = "2383169"
         await self.perform_check(ctx, test_user_id)
 
+    @mug.command(name="help")
+    async def help_command(self, ctx):
+        """Displays all available commands for the TornMonitor cog."""
+        help_text = (
+            "**TornMonitor Help**\n"
+            "Here are the available commands for TornMonitor:\n"
+            "\n"
+            "`!mug setapikey <api_key>` - Sets the Torn API key.\n"
+            "`!mug add <user_id>` - Adds a user ID to the monitoring list.\n"
+            "`!mug remove <user_id>` - Removes a user ID from the monitoring list.\n"
+            "`!mug list` - Lists all user IDs currently being monitored.\n"
+            "`!mug test` - Sends a test output message with a specific user ID.\n"
+            "`!mug help` - Displays this help message."
+        )
+        await ctx.send(help_text)
+
     async def perform_check(self, ctx, user_id):
         """Performs the check for a given user ID and sends the result to the Discord channel."""
         api_key = await self.config.api_key()
@@ -87,8 +103,7 @@ class TornMonitor(commands.Cog):
                 channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
                 if channel:
                     mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
-                    message = (f"Player {data.get('profile', {}).get('name', 'Unknown')}: "
-                               f"Available money on hand is {current_total_price}. [Mug]({mug_link})")
+                    message = (f"Player {data.get('profile', {}).get('name', 'Unknown')}: Available money on hand is {current_total_price}. [Mug]({mug_link})")
 
                     if seconds_since_last_action is not None:
                         message += f" Last action was {seconds_since_last_action} seconds ago."
@@ -118,8 +133,7 @@ class TornMonitor(commands.Cog):
             await asyncio.sleep(2)  # Check every 2 seconds
 
     def cog_unload(self):
-        if hasattr(self, '_task') and self._task:
-            self._task.cancel()
+        self._task.cancel()
 
     @commands.Cog.listener()
     async def on_ready(self):
