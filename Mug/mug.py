@@ -113,7 +113,8 @@ class TornMonitor(commands.Cog):
             print(f"User {user_id}: Seconds since last action = {seconds_since_last_action}")
 
             if current_total_price < previous_total_price:
-                if current_total_price > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
+                difference = previous_total_price - current_total_price
+                if difference > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
                     channel = discord.utils.get(self.bot.get_all_channels(), name='torn')
                     if channel:
                         mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
