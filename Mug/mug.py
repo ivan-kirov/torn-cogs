@@ -59,7 +59,15 @@ class TornMonitor(commands.Cog):
                 if "bazaar" in data:
                     current_total_price = sum(item["price"] for item in data["bazaar"])
                     previous_total_prices = await self.config.previous_total_prices()
-                    
+
+                    # Calculate the last action time in seconds
+                    if "last_action" in data and "timestamp" in data["last_action"]:
+                        last_action_timestamp = data["last_action"]["timestamp"]
+                        current_timestamp = int(time.time())
+                        seconds_since_last_action = current_timestamp - last_action_timestamp
+                    else:
+                        seconds_since_last_action = None
+
                     if user_id in previous_total_prices:
                         previous_total_price = previous_total_prices[user_id]
                         if current_total_price < previous_total_price:
@@ -68,7 +76,15 @@ class TornMonitor(commands.Cog):
                                 channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace with your channel name
                                 if channel:
                                     mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
-                                    await channel.send(f"User {user_id}: Items were purchased! Total spent: {difference}. [Mug]({mug_link})")
+                                    if seconds_since_last_action is not None:
+                                        await channel.send(
+                                            f"User {user_id}: Items were purchased! Total spent: {difference}. "
+                                            f"[Mug]({mug_link}) Last action was {seconds_since_last_action} seconds ago."
+                                        )
+                                    else:
+                                        await channel.send(
+                                            f"User {user_id}: Items were purchased! Total spent: {difference}. [Mug]({mug_link})"
+                                        )
                                 else:
                                     print("Channel not found.")
                         else:
