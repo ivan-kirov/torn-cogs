@@ -62,6 +62,17 @@ class TornMonitor(commands.Cog):
         test_user_id = "2383169"
         await self.perform_check(ctx, test_user_id)
 
+    @mug.command(name="bazaar")
+    async def current_price(self, ctx, user_id: str):
+        """Fetches and displays the current total price for a specific user."""
+        previous_total_prices = await self.config.previous_total_prices()
+        current_total_price = previous_total_prices.get(user_id, None)
+
+        if current_total_price is not None:
+            await ctx.send(f"User {user_id}: Current total price is {current_total_price}.")
+        else:
+            await ctx.send(f"No data found for user {user_id}.")
+
     @mug.command(name="help")
     async def help_command(self, ctx):
         """Displays all available commands for the TornMonitor cog."""
@@ -74,6 +85,7 @@ class TornMonitor(commands.Cog):
             "`!mug remove <user_id>` - Removes a user ID from the monitoring list.\n"
             "`!mug list` - Lists all user IDs currently being monitored.\n"
             "`!mug test` - Sends a test output message with a specific user ID.\n"
+            "`!mug bazaar` - Displays the bazaar total networth of a specific account."
             "`!mug help` - Displays this help message."
         )
         await ctx.send(help_text)
@@ -98,23 +110,38 @@ class TornMonitor(commands.Cog):
             status = data.get("profile", {}).get("status", {}).get("state", "Unknown")
             revivable = data.get("profile", {}).get("revivable", 0)
 
-            # Check conditions
-            if current_total_price > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
-                channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
-                if channel:
-                    mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
-                    message = (f"Player {data.get('profile', {}).get('name', 'Unknown')}: Available money on hand is {current_total_price}. [Mug]({mug_link})")
+            # Retrieve previous total price from the config
+            previous_total_prices = await self.config.previous_total_prices()
+            previous_total_price = previous_total_prices.get(user_id, current_total_price)
 
-                    if seconds_since_last_action is not None:
-                        message += f" Last action was {seconds_since_last_action} seconds ago."
-                    
-                    await channel.send(message)
+            # Check if the total price has decreased
+            if current_total_price < previous_total_price:
+                difference = previous_total_price - current_total_price
+
+                # Check if conditions are met
+                if difference > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
+                    channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
+                    if channel:
+                        mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
+                        message = (f"Player {data.get('profile', {}).get('name', 'Unknown')}: Available money on hand is {current_total_price}. [Mug]({mug_link})")
+
+                        if seconds_since_last_action is not None:
+                            message += f" Last action was {seconds_since_last_action} seconds ago."
+                        
+                        await channel.send(message)
+                    else:
+                        await ctx.send("Channel 'torn' not found. Please check the channel name.")
                 else:
-                    await ctx.send("Channel 'torn' not found. Please check the channel name.")
+                    print(f"User {user_id}: Conditions not met for posting a message.")
             else:
-                print(f"User {user_id}: Conditions not met for posting a message.")
+                print(f"User {user_id}: No purchases detected or conditions not met.")
+
+            # Update the previous total price
+            previous_total_prices[user_id] = current_total_price
+            await self.config.previous_total_prices.set(previous_total_prices)
         else:
             await ctx.send(f"Could not retrieve bazaar or profile data for user {user_id}.")
+
 
     async def check_for_purchases(self):
         """Periodically checks for purchases for each user ID."""
