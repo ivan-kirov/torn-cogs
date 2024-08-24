@@ -1,1 +1,8 @@
-Work in progress
+{
+    "author" : ["Peekaboo (peek_a_b00)"],
+    "install_msg" : "Message the user will recieve when they agree to install your repository.",
+    "name" : "Name of your repository.",
+    "short" : "Short description of your repo.",
+    "description" : "Long description about your repository.",
+    "tags" : ["List of search tags on red portal for your repo."]
+}
