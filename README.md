@@ -16,17 +16,14 @@ Load the Cog: Use the command [p]load tornmonitor to load the cog, where [p] is 
 Set the API Key:
 
 As the bot owner, you can set the API key using:
-sh
-!setapikey your_torn_api_key_here
+```!setapikey your_torn_api_key_here```
 Replace ! with your bot's command prefix.
 Add and Remove Users:
 
 Add users to monitor with:
-sh
-!adduser <user_id>
+```!adduser <user_id>```
 Remove users from monitoring with:
-sh
-!removeuser <user_id>
+```!removeuser <user_id>```
 Run the Bot:
 
 Ensure the bot is running and that it's monitoring the specified users. It will send messages to the designated channel whenever purchases are detected.
