@@ -3,6 +3,7 @@ from redbot.core import commands, checks
 import requests
 import asyncio
 import time
+import json
 
 class TornMonitor(commands.Cog):
     """Cog for monitoring Torn API purchases."""
