@@ -8,7 +8,7 @@
         "Prile"
     ],
     "required_cogs": {},
-    "requirements": ["discord", "requests", "asyncio"],
+    "requirements": [],
     "tags": ["utility", "bazaar tracking"],
     "min_bot_version": "1.0",
     "hidden": false,
