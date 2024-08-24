@@ -115,56 +115,52 @@ class TornMonitor(commands.Cog):
             return
 
         url = f"https://api.torn.com/user/{user_id}?selections=profile,bazaar&key={api_key}"
-        response = requests.get(url)
-        data = response.json()
+        try:
+            response = requests.get(url)
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data for user {user_id}: {e}")
+            await ctx.send(f"An error occurred while fetching data for user {user_id}.")
+            return
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON response for user {user_id}: {e}")
+            await ctx.send(f"An error occurred while processing data for user {user_id}.")
+            return
 
         # Debug statement to print the response data
         print(f"Response data for user {user_id}: {json.dumps(data, indent=4)}")
 
-        if "bazaar" in data and "name" in data:
-            current_total_price = sum(item["price"] * item.get("quantity", 1) for item in data["bazaar"])
-            last_action_timestamp = data.get("last_action", {}).get("timestamp", None)
-            current_timestamp = int(time.time())
-            seconds_since_last_action = current_timestamp - last_action_timestamp if last_action_timestamp else None
-
-            status = data.get("status", {}).get("state", "Unknown")
-            revivable = data.get("revivable", 0)
-
-            previous_total_prices = self.user_data.get('previous_total_prices', {})
-            previous_total_price = previous_total_prices.get(user_id, 0)
-
-            # Debug statements for internal state
-            print(f"User {user_id}: Current total price = {current_total_price}, Previous total price = {previous_total_price}")
-            print(f"User {user_id}: Status = {status}, Revivable = {revivable}")
-            print(f"User {user_id}: Seconds since last action = {seconds_since_last_action}")
-
-            # Check if the total price has decreased
-            if current_total_price < previous_total_price:
-                difference = previous_total_price - current_total_price
-
-                if current_total_price > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
-                    channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
-                    if channel:
-                        mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
-                        message = (f"Player {data.get('name', 'Unknown')}: Available money on hand is {current_total_price}. [Mug]({mug_link})")
-
-                        if seconds_since_last_action is not None:
-                            message += f" Last action was {seconds_since_last_action} seconds ago."
-                        
-                        await channel.send(message)
-                    else:
-                        await ctx.send("Channel 'torn' not found. Please check the channel name.")
-                else:
-                    print(f"User {user_id}: Conditions not met for posting a message.")
-            else:
-                print(f"User {user_id}: No purchases detected or conditions not met.")
-
-            # Update the previous total price
-            previous_total_prices[user_id] = current_total_price
-            self.user_data['previous_total_prices'] = previous_total_prices
-            save_json(self.user_data, USER_DATA_FILE)
-        else:
+        if "bazaar" not in data or "name" not in data:
             await ctx.send(f"Could not retrieve bazaar or profile data for user {user_id}.")
+            return
+
+        current_total_price = sum(item["price"] * item.get("quantity", 1) for item in data["bazaar"])
+        last_action_timestamp = data.get("last_action", {}).get("timestamp", None)
+        current_timestamp = int(time.time())
+        seconds_since_last_action = current_timestamp - last_action_timestamp if last_action_timestamp else None
+
+        status = data.get("status", {}).get("state", "Unknown")
+        revivable = data.get("revivable", 0)
+
+        previous_total_prices = self.user_data.get('previous_total_prices', {})
+        previous_total_price = previous_total_prices.get(user_id, 0)
+
+        # Check if the total price has changed
+        if current_total_price != previous_total_price:
+            difference = abs(current_total_price - previous_total_price)
+
+            # Check for purchase (increased price) or selling (decreased price)
+            if current_total_price > previous_total_price:
+                message = f"**Potential Purchase Alert!** Player {data.get('name', 'Unknown')} might have purchased items. Total price increased by {difference}."
+            else:
+                message = f"Player {data.get('name', 'Unknown')}: Available money on hand is {current_total_price}. [Mug]({f'https://www.torn.com/loader.php?sid=attack&user2ID={user_id}'})"
+
+                if seconds_since_last_action is not None:
+                    message += f" Last action was {seconds_since_last_action} seconds ago."
+
+            # Posting conditions (you can customize these)
+            if (current_total_price > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1))):
+                channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace 'torn' with your channel name
 
 
     async def check_for_purchases(self):
