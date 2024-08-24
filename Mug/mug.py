@@ -13,14 +13,14 @@ class TornMonitor(commands.Cog):
         self.config.register_global(user_ids=[])  # Global configuration for user IDs to monitor
         self.config.register_global(api_key=None)  # Global configuration for the Torn API key
 
-    @commands.command()
+    @commands.command(aliases=["apikey", "setkey"])
     @checks.is_owner()
     async def setapikey(self, ctx, api_key: str):
         """Sets the Torn API key."""
         await self.config.api_key.set(api_key)
         await ctx.send("Torn API key has been set successfully.")
 
-    @commands.command()
+    @commands.command(aliases=["add", "monitoruser"])
     async def adduser(self, ctx, user_id: str):
         """Adds a user ID to the monitoring list."""
         async with self.config.user_ids() as user_ids:
@@ -30,7 +30,7 @@ class TornMonitor(commands.Cog):
             else:
                 await ctx.send(f"User ID {user_id} is already being monitored.")
 
-    @commands.command()
+    @commands.command(aliases=["remove", "unmonitoruser"])
     async def removeuser(self, ctx, user_id: str):
         """Removes a user ID from the monitoring list."""
         async with self.config.user_ids() as user_ids:
@@ -64,7 +64,7 @@ class TornMonitor(commands.Cog):
                         previous_total_price = previous_total_prices[user_id]
                         if current_total_price < previous_total_price:
                             difference = previous_total_price - current_total_price
-                            if difference > 3000000 :
+                            if difference > 3000000:
                                 channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace with your channel name
                                 if channel:
                                     mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
