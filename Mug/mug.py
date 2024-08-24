@@ -10,13 +10,20 @@ USER_DATA_FILE = "user_data.json"
 
 def load_json(filename):
     if os.path.exists(filename):
-        with open(filename, "r") as file:
-            return json.load(file)
+        try:
+            with open(filename, "r") as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            print(f"Error decoding JSON from {filename}. Using an empty dictionary.")
+            return {}
     return {}
 
 def save_json(data, filename):
-    with open(filename, "w") as file:
-        json.dump(data, file, indent=4)
+    try:
+        with open(filename, "w") as file:
+            json.dump(data, file, indent=4)
+    except IOError as e:
+        print(f"Error writing to {filename}: {e}")
 
 class TornMonitor(commands.Cog):
     """Cog for monitoring Torn API purchases."""
@@ -35,9 +42,13 @@ class TornMonitor(commands.Cog):
     @checks.is_owner()
     async def setapikey(self, ctx, api_key: str):
         """Sets the Torn API key."""
-        self.user_data['api_key'] = api_key
-        save_json(self.user_data, USER_DATA_FILE)
-        await ctx.send("Torn API key has been set successfully.")
+        try:
+            self.user_data['api_key'] = api_key
+            save_json(self.user_data, USER_DATA_FILE)
+            await ctx.send("Torn API key has been set successfully.")
+        except Exception as e:
+            await ctx.send("An error occurred while setting the API key.")
+            print(f"Error in setapikey: {e}")
 
     @mug.command(name="add", aliases=["+"])
     async def adduser(self, ctx, user_id: str):
