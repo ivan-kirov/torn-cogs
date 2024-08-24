@@ -30,7 +30,22 @@ class TornMonitor(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.user_data = load_json(USER_DATA_FILE)  # Load existing data
+        # Load user data from JSON file
+        self.user_data = load_json(USER_DATA_FILE)
+
+        # Ensure 'user_ids' is initialized
+        if 'user_ids' not in self.user_data:
+            self.user_data['user_ids'] = []
+
+        # Ensure 'previous_total_prices' is initialized
+        if 'previous_total_prices' not in self.user_data:
+            self.user_data['previous_total_prices'] = {}
+
+        # Debug statements to verify initialization
+        print(f"Loaded user data: {self.user_data}")
+
+        # Start the background task
+        self._task = self.bot.loop.create_task(self.check_for_purchases())
 
     @commands.group()
     async def mug(self, ctx):
@@ -169,7 +184,9 @@ class TornMonitor(commands.Cog):
             await asyncio.sleep(2)  # Check every 2 seconds
 
     def cog_unload(self):
-        self._task.cancel()
+        """Cancel the background task when the cog is unloaded."""
+        if hasattr(self, '_task'):
+            self._task.cancel()
 
     @commands.Cog.listener()
     async def on_ready(self):
