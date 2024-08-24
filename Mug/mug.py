@@ -67,7 +67,8 @@ class TornMonitor(commands.Cog):
                             if difference > 3000000 :
                                 channel = discord.utils.get(self.bot.get_all_channels(), name='torn')  # Replace with your channel name
                                 if channel:
-                                    await channel.send(f"User {user_id}: Items were purchased! Total spent: {difference}")
+                                    mug_link = f"https://www.torn.com/loader.php?sid=attack&user2ID={user_id}"
+                                    await channel.send(f"User {user_id}: Items were purchased! Total spent: {difference}. [Mug]({mug_link})")
                                 else:
                                     print("Channel not found.")
                         else:
