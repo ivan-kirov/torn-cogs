@@ -116,6 +116,17 @@ class TornMonitor(commands.Cog):
         logger.info(f"Check interval has been set to {seconds} seconds")
         await ctx.send(f"Check interval has been set to {seconds} seconds.")
 
+    @mug.command(name="setchannel")
+    async def setchannel(self, ctx, channel_name: str):
+        """Sets the channel name where messages will be sent."""
+        try:
+            self.user_data['channel_name'] = channel_name
+            logger.info(f"Channel name set to {channel_name}")
+            await ctx.send(f"Channel name has been set to {channel_name}.")
+        except Exception as e:
+            logger.error(f"Error setting channel name: {e}")
+            await ctx.send("An error occurred while setting the channel name.")
+
     async def perform_check(self, ctx, user_id):
         """Performs the check for a given user ID and sends the result to the Discord channel."""
         logger.info(f"Performing check for user ID: {user_id}")
@@ -156,7 +167,8 @@ class TornMonitor(commands.Cog):
             if current_total_price < previous_total_price:
                 difference = previous_total_price - current_total_price
                 if difference > 5000000 and (status == "Okay" or (status == "Hospital" and revivable == 1)):
-                    channel = discord.utils.get(self.bot.get_all_channels(), name='torn')
+                    channel_name = self.user_data.get('channel_name', 'torn')
+                    channel = discord.utils.get(self.bot.get_all_channels(), name=channel_name)
                     if channel:
                         # Format the current total price as currency
                         formatted_price = locale.format_string('%s', current_total_price, grouping=True, thousands_sep=',')
