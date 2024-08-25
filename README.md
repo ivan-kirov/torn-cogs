@@ -31,7 +31,7 @@
 1. **Set the Torn API Key** Use the command to set your Torn API key. This key is used to authenticate requests to the Torn API.
    ```bash
    [p]mug setapikey <your_api_key>
-2. ** Set the Discord Channel** By the default the name of the discord channel is "torn", if you want to specify a different discord channel please use the below cmdlet.
+2. **Set the Discord Channel** By the default the name of the discord channel is "torn", if you want to specify a different discord channel please use the below cmdlet.
    ```bash
    !mug setchannel <your discord channel name>
 
