@@ -47,7 +47,6 @@
    ```bash
    [p]mug togglelogging true   # To enable detailed logging
    [p]mug togglelogging false  # To disable detailed logging
-6. **
    
 
 ## Commands
