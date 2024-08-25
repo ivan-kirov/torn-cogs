@@ -25,3 +25,32 @@
    ```bash
    cd path/to/Red-DiscordBot/cogs
    git clone https://github.com/yourusername/tornmonitor.git
+
+## Setup
+
+1. **Set the Torn API Key** Use the command to set your Torn API key. This key is used to authenticate requests to the Torn API.
+   ```bash
+   [p]mug setapikey <your_api_key>
+
+2.  **Add Users to Monitor** Add user IDs that you want the cog to monitor. These should be valid Torn City user IDs.
+    ```bash
+    [p]mug add <user_id>
+    
+3. **Set the Check Interval**  Optionally, you can set how often the bot checks for purchases. The interval is specified in seconds.
+   ```bash
+   [p]mug setinterval <seconds>
+
+4. **Enable or Disable Detailed Logging** Toggle detailed logging to help debug issues or to monitor the bot's activities more closely.
+   ```bash
+   [p]mug togglelogging true   # To enable detailed logging
+   [p]mug togglelogging false  # To disable detailed logging
+
+## Commands
+
+   ```bash
+   [p]mug setapikey <api_key>	#Sets the Torn API key for authentication.
+   [p]mug add <user_id>	#Adds a user ID to the list of monitored users.
+   [p]mug remove <user_id>	#Removes a user ID from the list of monitored users.
+   [p]mug list	#Lists all currently monitored user IDs.
+   [p]mug setinterval <seconds>	#Sets the time interval between checks.
+   [p]mug togglelogging <true/false>	#Enables or disables detailed logging.
