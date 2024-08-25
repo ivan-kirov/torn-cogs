@@ -1,6 +1,6 @@
 # TornMonitor Cog
 
-**TornMonitor** is a cog for RedBot, designed to monitor the Torn City game for user-specific activities, such as monitoring bazaar purchases. The cog uses the Torn API to fetch user data and checks periodically for any changes in specified users' activity.
+**TornMonitor** is a cog for RedBot, designed to monitor the Torn City game for user-specific activities, such as monitoring bazaar purchases. The cog uses the Torn API to fetch user data and checks periodically for any changes in specified user's bazaar sum of item prices. It compares the total sum of prices with the previous value and if it's lower it means that most likely there was a sell. The logic will only trigger a discord message if the differences between previous and current sum total is more than 5M and bazaar owner is "Okay" or in "Hospital", but with revives "ON". It sends a discord message with an **Attack** hyperlink for you to initiate the mug.
 
 ## Features
 
