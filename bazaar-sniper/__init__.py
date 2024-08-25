@@ -1,4 +1,4 @@
-from .sniper import BazaarSniper
+from .sniper import ItemMonitor
 
 async def setup(bot):
-    await bot.add_cog(BazaarSniper(bot))
+    await bot.add_cog(ItemMonitor(bot))
