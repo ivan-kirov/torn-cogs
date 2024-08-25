@@ -173,7 +173,7 @@ class TornMonitor(commands.Cog):
                     await self.perform_check(None, user_id)  # Passing `None` for context
                 except Exception as e:
                     print(f"Error performing check for user {user_id}: {e}")
-
+                    
             await asyncio.sleep(2)  # Check every 2 seconds
 
     def cog_unload(self):
