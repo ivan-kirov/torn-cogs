@@ -29,7 +29,7 @@ class TornMonitor(commands.Cog):
         }
 
         # Debug statements to verify initialization
-        logger.info("Initialized user data")
+        logger.info('Initialized user data')
 
         # Start the background task
         self._task = self.bot.loop.create_task(self.check_for_purchases())
@@ -41,16 +41,16 @@ class TornMonitor(commands.Cog):
     async def mug(self, ctx):
         """Group command for Torn API monitoring related commands."""
         if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid mug command passed...")
+            await ctx.send('Invalid mug command passed...')
 
-    @mug.command(name="setapikey")
-    @checks.is_owner()
+    @mug.command(name='setapikey')
+    #@checks.is_owner()
     async def setapikey(self, ctx, api_key: str):
         """Sets the Torn API key."""
         try:
             self.user_data['api_key'] = api_key
-            logger.info("Torn API key has been set successfully")
-            await ctx.send("Torn API key has been set successfully.")
+            logger.info('Torn API key has been set successfully')
+            await ctx.send('Torn API key has been set successfully.')
         except Exception as e:
             logger.error(f"Error setting API key: {e}")
             await ctx.send("An error occurred while setting the API key.")
