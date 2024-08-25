@@ -27,15 +27,17 @@ class TornMonitor(commands.Cog):
             'previous_total_prices': {},
             'api_key': None
         }
+        try:
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+            logger.info("Locale set to en_US.UTF-8")
+        except locale.Error as e:
+            logger.error(f"Error setting locale: {e}")
 
         # Debug statements to verify initialization
         logger.info('Initialized user data')
 
         # Start the background task
         self._task = self.bot.loop.create_task(self.check_for_purchases())
-
-    # Set the desired locale (e.g., "en_US" for US English)
-    locale.setlocale(locale.LC_ALL, 'en_US')  # Replace 'en_US' with your desired locale
 
     @commands.group()
     async def mug(self, ctx):
