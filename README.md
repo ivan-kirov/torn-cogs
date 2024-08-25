@@ -20,11 +20,11 @@
 
 1. **Install RedBot** if you haven't already. Follow the instructions on the [RedBot GitHub page](https://github.com/Cog-Creators/Red-DiscordBot).
 
-2. **Clone the repository** containing this cog into your RedBot's `cogs` folder.
+2. **Add the cog** Send the following message in discord to your RedBot.
 
    ```bash
-   cd path/to/Red-DiscordBot/cogs
-   git clone https://github.com/ivan-kirov/torn-cogs.git
+   [p]repo add torn-cogs https://github.com/ivan-kirov/torn-cogs
+   [p]cog install torn-cogs Mug
 
 ## Setup
 
@@ -33,7 +33,7 @@
    [p]mug setapikey <your_api_key>
 2. **Set the Discord Channel** By the default the name of the discord channel is "torn", if you want to specify a different discord channel please use the below cmdlet.
    ```bash
-   !mug setchannel <your discord channel name>
+   [p]mug setchannel <your discord channel name>
 
 3.  **Add Users to Monitor** Add user IDs that you want the cog to monitor. These should be valid Torn City user IDs.
     ```bash
