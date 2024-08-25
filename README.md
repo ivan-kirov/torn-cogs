@@ -20,7 +20,7 @@
 
 1. **Install RedBot** if you haven't already. Follow the instructions on the [RedBot GitHub page](https://github.com/Cog-Creators/Red-DiscordBot).
 
-2. **Add the cog** Send the following message in discord to your RedBot.
+2. **Add the cog** Send the following messages in discord to your RedBot.
 
    ```bash
    [p]repo add torn-cogs https://github.com/ivan-kirov/torn-cogs
