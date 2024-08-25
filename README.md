@@ -24,7 +24,7 @@
 
    ```bash
    cd path/to/Red-DiscordBot/cogs
-   git clone https://github.com/yourusername/tornmonitor.git
+   git clone https://github.com/ivan-kirov/torn-cogs.git
 
 ## Setup
 
