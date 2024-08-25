@@ -1,0 +1,17 @@
+{
+    "name": "Bazaar-Sniper",
+    "short": "An advanced bot to look for underpriced items.",
+    "description": "An advanced bot to look for underpriced items and notifies you to buy them.",
+    "end_user_data_statement": "This cog does not store end user data.",
+    "install_msg": "Thanks for installing Prile's advanced Bazaar-Sniper.\n\nIf you come across any errors please report them :)",
+    "author": [
+        "Prile"
+    ],
+    "required_cogs": {},
+    "requirements": ["discord", "requests", "asyncio"],
+    "tags": ["utility", "bazaar tracking"],
+    "min_bot_version": "3.5",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}
