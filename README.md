@@ -31,19 +31,24 @@
 1. **Set the Torn API Key** Use the command to set your Torn API key. This key is used to authenticate requests to the Torn API.
    ```bash
    [p]mug setapikey <your_api_key>
+2. ** Set the Discord Channel** By the default the name of the discord channel is "torn", if you want to specify a different discord channel please use the below cmdlet.
+   ```bash
+   !mug setchannel <your discord channel name>
 
-2.  **Add Users to Monitor** Add user IDs that you want the cog to monitor. These should be valid Torn City user IDs.
+3.  **Add Users to Monitor** Add user IDs that you want the cog to monitor. These should be valid Torn City user IDs.
     ```bash
     [p]mug add <user_id>
     
-3. **Set the Check Interval**  Optionally, you can set how often the bot checks for purchases. The interval is specified in seconds.
+4. **Set the Check Interval**  Optionally, you can set how often the bot checks for purchases. The interval is specified in seconds.
    ```bash
    [p]mug setinterval <seconds>
 
-4. **Enable or Disable Detailed Logging** Toggle detailed logging to help debug issues or to monitor the bot's activities more closely.
+5. **Enable or Disable Detailed Logging** Toggle detailed logging to help debug issues or to monitor the bot's activities more closely.
    ```bash
    [p]mug togglelogging true   # To enable detailed logging
    [p]mug togglelogging false  # To disable detailed logging
+6. **
+   
 
 ## Commands
 
