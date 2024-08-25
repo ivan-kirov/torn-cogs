@@ -9,7 +9,7 @@ import logging
 
 # Create a logger and configure it to write to a file
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)  # Default to INFO level to prevent detailed logging initially
 
 handler = logging.FileHandler('/home/minecraft/redenv/torn_monitor.log')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -27,17 +27,19 @@ class TornMonitor(commands.Cog):
             'previous_total_prices': {},
             'api_key': None
         }
-        try:
-            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-            logger.info("Locale set to en_US.UTF-8")
-        except locale.Error as e:
-            logger.error(f"Error setting locale: {e}")
 
         # Debug statements to verify initialization
         logger.info('Initialized user data')
 
         # Start the background task
         self._task = self.bot.loop.create_task(self.check_for_purchases())
+
+        # Set the locale in the initialization
+        try:
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+            logger.info("Locale set to en_US.UTF-8")
+        except locale.Error as e:
+            logger.error(f"Error setting locale: {e}")
 
     @commands.group()
     async def mug(self, ctx):
@@ -46,7 +48,6 @@ class TornMonitor(commands.Cog):
             await ctx.send('Invalid mug command passed...')
 
     @mug.command(name='setapikey')
-    #@checks.is_owner()
     async def setapikey(self, ctx, api_key: str):
         """Sets the Torn API key."""
         try:
@@ -89,6 +90,19 @@ class TornMonitor(commands.Cog):
         else:
             logger.info("No user IDs are currently being monitored")
             await ctx.send("No user IDs are currently being monitored.")
+
+    @mug.command(name="togglelogging")
+    @checks.is_owner()
+    async def toggle_logging(self, ctx, enable: bool):
+        """Toggles detailed logging on or off."""
+        if enable:
+            logger.setLevel(logging.DEBUG)
+            logger.info("Detailed logging has been enabled")
+            await ctx.send("Detailed logging has been enabled.")
+        else:
+            logger.setLevel(logging.INFO)
+            logger.info("Detailed logging has been disabled")
+            await ctx.send("Detailed logging has been disabled.")
 
     async def perform_check(self, ctx, user_id):
         """Performs the check for a given user ID and sends the result to the Discord channel."""
@@ -172,11 +186,12 @@ class TornMonitor(commands.Cog):
                 try:
                     await self.perform_check(None, user_id)  # Passing `None` for context
                 except Exception as e:
-                    print(f"Error performing check for user {user_id}: {e}")
-                    
+                    logger.error(f"Error performing check for user {user_id}: {e}")
+
             await asyncio.sleep(2)  # Check every 2 seconds
 
     def cog_unload(self):
         """Cancel the background task when the cog is unloaded."""
         if hasattr(self, '_task'):
             self._task.cancel()
+
