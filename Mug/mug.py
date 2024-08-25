@@ -21,6 +21,7 @@ class TornMonitor(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.check_interval = 2  # Default interval to 2 seconds
         # Initialize user data with default values
         self.user_data = {
             'user_ids': [],
@@ -104,6 +105,17 @@ class TornMonitor(commands.Cog):
             logger.info("Detailed logging has been disabled")
             await ctx.send("Detailed logging has been disabled.")
 
+    @mug.command(name="setinterval")
+    @checks.is_owner()
+    async def set_interval(self, ctx, seconds: int):
+        """Sets the time interval between checks."""
+        if seconds < 1:
+            await ctx.send("Interval must be at least 1 second.")
+            return
+        self.check_interval = seconds
+        logger.info(f"Check interval has been set to {seconds} seconds")
+        await ctx.send(f"Check interval has been set to {seconds} seconds.")
+
     async def perform_check(self, ctx, user_id):
         """Performs the check for a given user ID and sends the result to the Discord channel."""
         logger.info(f"Performing check for user ID: {user_id}")
@@ -178,7 +190,7 @@ class TornMonitor(commands.Cog):
             api_key = self.user_data.get('api_key')
             if not api_key:
                 logger.warning("API key is not set. Skipping Torn API checks")
-                await asyncio.sleep(30)
+                await asyncio.sleep(self.check_interval)
                 continue
 
             user_ids = self.user_data.get('user_ids', [])
@@ -188,10 +200,9 @@ class TornMonitor(commands.Cog):
                 except Exception as e:
                     logger.error(f"Error performing check for user {user_id}: {e}")
 
-            await asyncio.sleep(2)  # Check every 2 seconds
+            await asyncio.sleep(self.check_interval)  # Use the adjustable interval
 
     def cog_unload(self):
         """Cancel the background task when the cog is unloaded."""
         if hasattr(self, '_task'):
             self._task.cancel()
-
