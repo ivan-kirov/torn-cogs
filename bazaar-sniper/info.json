@@ -1,5 +1,5 @@
 {
-    "name": "Bazaar-Sniper",
+    "name": "bazaar-sniper",
     "short": "An advanced bot to look for underpriced items.",
     "description": "An advanced bot to look for underpriced items and notifies you to buy them.",
     "end_user_data_statement": "This cog does not store end user data.",
