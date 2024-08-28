@@ -27,6 +27,7 @@ class ItemMonitor(commands.Cog):
         self.item_data_file = '/home/minecraft/redenv/item_data.json'  # Path to the JSON file
         self.market_check_interval = 2160  # Default to 6 hours
         self.market_channel_id = None  # Channel ID to send market alerts
+        self.price_drop_percentage = 50  # Default price drop percentage
 
         # Initialize item data
         self.items = self.load_item_data()
@@ -131,6 +132,17 @@ class ItemMonitor(commands.Cog):
         logger.info(f"Market alerts will be sent to channel: {channel.name}")
         await ctx.send(f"Market alerts will be sent to channel: {channel.mention}")
 
+    @item.command(name='setpercentage')
+    @checks.is_owner()
+    async def set_percentage(self, ctx, percentage: float):
+        """Sets the percentage threshold for price drop alerts."""
+        if percentage <= 0 or percentage >= 100:
+            await ctx.send("Percentage must be a value between 0 and 100.")
+            return
+        self.price_drop_percentage = percentage
+        logger.info(f"Price drop percentage threshold has been set to {percentage}%")
+        await ctx.send(f"Price drop percentage threshold has been set to {percentage}%.")
+
     async def fetch_market_value(self, item_id):
         """Fetches the market value for a given item ID using Torn API."""
         api_key = self.user_data.get('api_key')
@@ -156,13 +168,6 @@ class ItemMonitor(commands.Cog):
             logger.error(f"Error fetching market value for item {item_id}: {e}")
             return None
 
-    async def check_for_item_values(self):
-        """Periodically checks for item values for each item ID."""
-        logger.info("Starting check for item values")
-        await self.bot.wait_until_ready()
-        while True:
-            await asyncio.sleep(self.check_interval)  # Use the adjustable interval
-
     async def check_market_values(self):
         """Periodically checks market values and sends alerts if the lowest cost is lower than market value."""
         logger.info("Starting market value check")
@@ -181,14 +186,19 @@ class ItemMonitor(commands.Cog):
 
                     logger.debug(f"Item {item_id}: Lowest cost = {lowest_cost}, Market value = {market_value}")
 
-                    if lowest_cost < market_value * 0.7 and self.market_channel_id:
+                    # Calculate the threshold value based on the set percentage
+                    threshold_value = market_value * ((100 - self.price_drop_percentage) / 100)
+
+                    if lowest_cost < threshold_value and self.market_channel_id:
                         channel = discord.utils.get(self.bot.get_all_channels(), id=self.market_channel_id)
                         if channel:
                             item_name = self.items[item_id].get('name', 'Unknown')
                             formatted_price = locale.currency(lowest_cost, grouping=True)
                             formatted_market_value = locale.currency(market_value, grouping=True)
-                            message = (f"Alert: The lowest cost for {item_name} (ID {item_id}) on the market is {formatted_price}, "
-                                       f"which is more than 30% lower than the market value {formatted_market_value}.")
+                            message = (
+                                f"Alert: The lowest cost for {item_name} (ID {item_id}) on the market is {formatted_price}, "
+                                f"which is lower than the market value {formatted_market_value} by {self.price_drop_percentage}%."
+                            )
                             await channel.send(message)
                         else:
                             logger.warning("Market alert channel not found")
