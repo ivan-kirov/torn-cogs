@@ -6,9 +6,6 @@ import json
 import logging
 import locale
 
-# Set the locale for currency formatting
-locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-
 # Create a logger and configure it to write to a file
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)  # Default to INFO level to prevent detailed logging initially
@@ -38,6 +35,13 @@ class ItemMonitor(commands.Cog):
         # Start the background tasks
         self._task = self.bot.loop.create_task(self.check_for_item_values())
         self._market_task = self.bot.loop.create_task(self.check_market_values())
+
+        # Set the locale in the initialization
+        try:
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+            logger.info("Locale set to en_US.UTF-8")
+        except locale.Error as e:
+            logger.error(f"Error setting locale: {e}")
 
     def load_item_data(self):
         """Load item data from the JSON file."""
