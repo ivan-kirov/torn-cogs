@@ -4,6 +4,10 @@ import requests
 import asyncio
 import json
 import logging
+import locale
+
+# Set the locale for currency formatting
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 # Create a logger and configure it to write to a file
 logger = logging.getLogger(__name__)
@@ -73,7 +77,6 @@ class ItemMonitor(commands.Cog):
             logger.info(f"Item ID {item_id} is already being monitored")
             await ctx.send(f"Item ID {item_id} is already being monitored.")
 
-
     @item.command(name='remove')
     @checks.is_owner()
     async def remove_item(self, ctx, item_id: str):
@@ -109,7 +112,6 @@ class ItemMonitor(commands.Cog):
         logger.info(f"Check interval has been set to {hours} hours ({self.check_interval} seconds)")
         await ctx.send(f"Check interval has been set to {hours} hours.")
 
-
     @item.command(name='setmarketinterval')
     @checks.is_owner()
     async def set_market_interval(self, ctx, seconds: int):
@@ -144,7 +146,6 @@ class ItemMonitor(commands.Cog):
             logger.debug(f"Fetched market data for item {item_id}: {json.dumps(data, indent=4)}")
 
             # Extracting market value (assuming it's available as 'market_value' in the API response)
-            # You might need to adjust the key based on actual API response structure
             market_value = data.get('market_value', None)
             if market_value is not None:
                 return market_value
@@ -155,71 +156,11 @@ class ItemMonitor(commands.Cog):
             logger.error(f"Error fetching market value for item {item_id}: {e}")
             return None
 
-
-    async def perform_check(self, ctx, user_id):
-        """Performs the check for a given user ID and sends the result to the Discord channel."""
-        logger.info(f"Performing check for user ID: {user_id}")
-        api_key = self.user_data.get('api_key')
-        if not api_key:
-            logger.warning("API key is not set")
-            await ctx.send("API key is not set. Please set the API key using `!mug setapikey`.")
-            return
-
-        url = f"https://api.torn.com/user/{user_id}?selections=profile,bazaar&key={api_key}"
-        response = requests.get(url)
-        data = response.json()
-
-        logger.debug(f"Response data for user {user_id}: {json.dumps(data, indent=4)}")
-
-        if "bazaar" in data:
-            try:
-                # Assume we have a dictionary of market values for items
-                market_values = {
-                    # Example item prices (replace with actual data)
-                    'item1': 1000000,
-                    'item2': 500000,
-                    # Add more items and their market values as needed
-                }
-
-                for item in data["bazaar"]:
-                    item_name = item.get("Name")
-                    current_price = item.get("price", 0)
-                    market_value = market_values.get(item_id)
-
-                    if market_value is not None and current_price < market_value * 0.7:
-                        # Item is 30% lower than market value
-                        channel_name = self.user_data.get('channel_name', 'torn')
-                        channel = discord.utils.get(self.bot.get_all_channels(), name=channel_name)
-                        if channel:
-                            formatted_price = locale.format_string('%s', current_price, grouping=True, thousands_sep=',')
-                            buy_link = f"https://www.torn.com/imarket.php#/p=shop&step=shop&type=&searchname={item_name}"
-                            message = (f"{item_name} ONLY for {formatted_price}. CLICK HERE TO BUY {buy_link}")
-
-                            await channel.send(message)
-                        else:
-                            logger.warning(f"Channel '{channel_name}' not found")
-                            await ctx.send(f"Channel '{channel_name}' not found. Please check the channel name.")
-                    else:
-                        logger.debug(f"User {user_id}: No significant price drop detected for item {item_id}")
-
-            except Exception as e:
-                logger.error(f"Error calculating price comparison: {e}")
-                await ctx.send("Error calculating the bazaar price comparison.")
-        else:
-            logger.error(f"Could not retrieve bazaar or profile data for user {user_id}")
-            await ctx.send(f"Could not retrieve bazaar or profile data for user {user_id}.")
-
-
     async def check_for_item_values(self):
         """Periodically checks for item values for each item ID."""
         logger.info("Starting check for item values")
         await self.bot.wait_until_ready()
         while True:
-            for item_id in self.items:
-                try:
-                    await self.perform_check(None, item_id)  # Passing `None` for context
-                except Exception as e:
-                    logger.error(f"Error performing check for item {item_id}: {e}")
             await asyncio.sleep(self.check_interval)  # Use the adjustable interval
 
     async def check_market_values(self):
@@ -244,14 +185,16 @@ class ItemMonitor(commands.Cog):
                         channel = discord.utils.get(self.bot.get_all_channels(), id=self.market_channel_id)
                         if channel:
                             item_name = self.items[item_id].get('name', 'Unknown')
-                            message = (f"Alert: The lowest cost for {item_name} (ID {item_id}) on the market is {lowest_cost}, which is lower than the market value {market_value}.")
+                            formatted_price = locale.currency(lowest_cost, grouping=True)
+                            formatted_market_value = locale.currency(market_value, grouping=True)
+                            message = (f"Alert: The lowest cost for {item_name} (ID {item_id}) on the market is {formatted_price}, "
+                                       f"which is more than 30% lower than the market value {formatted_market_value}.")
                             await channel.send(message)
                         else:
                             logger.warning("Market alert channel not found")
                 except Exception as e:
                     logger.error(f"Error checking market values for item {item_id}: {e}")
             await asyncio.sleep(self.market_check_interval)  # Use the adjustable interval
-
 
     def cog_unload(self):
         """Cancel the background tasks when the cog is unloaded."""
