@@ -4,7 +4,6 @@ import requests
 import json
 import logging
 import os
-import asyncio  # Make sure to import asyncio
 
 class ItemMonitor(commands.Cog):
     """Cog for monitoring Torn API item market values."""
@@ -20,18 +19,15 @@ class ItemMonitor(commands.Cog):
     def load_item_data(self):
         """Load item data from the JSON file or create it if it doesn't exist."""
         file_path = '/home/minecraft/redenv/item_data.json'
-        
-        # Check if the file exists
-        if not os.path.exists(file_path):
-            # Create a new file with default content
-            default_data = {}
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            return data.get("item_ids", [])
+        else:
+            # Create a new file if it doesn't exist
             with open(file_path, 'w') as f:
-                json.dump(default_data, f)
-            logging.info("item_data.json created with default content.")
-        
-        # Load the data from the file
-        with open(file_path, 'r') as f:
-            return json.load(f)
+                json.dump({"item_ids": []}, f)
+            return []
 
     async def fetch_market_value(self, item_id):
         """Fetches the average market value and first listing price for a given item ID."""
@@ -71,7 +67,12 @@ class ItemMonitor(commands.Cog):
 
     @commands.group()
     async def item(self, ctx):
-        """Group command for Torn API item monitoring related commands."""
+        """Group command for Torn API item monitoring related commands.
+        
+        Available commands:
+        - !item setmarketchannel <channel>: Sets the channel to send market alerts.
+        - !item setitemids <item_id1> <item_id2> ...: Sets the item IDs to monitor.
+        """
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid item command passed...')
 
@@ -81,6 +82,31 @@ class ItemMonitor(commands.Cog):
         """Sets the channel to send market alerts."""
         self.market_channel_id = channel.id
         await ctx.send(f"Market alerts will be sent to channel: {channel.mention}")
+
+    @item.command(name='setitemids')
+    @checks.is_owner()
+    async def set_item_ids(self, ctx, *item_ids: str):
+        """Sets the item IDs to monitor."""
+        # Load existing data
+        file_path = '/home/minecraft/redenv/item_data.json'
+        
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+        else:
+            data = {}
+
+        # Set the item IDs
+        data["item_ids"] = list(item_ids)
+
+        # Save the data back to the file
+        with open(file_path, 'w') as f:
+            json.dump(data, f)
+
+        # Update the items attribute
+        self.items = data.get("item_ids", [])
+        
+        await ctx.send(f"Item IDs set to: {', '.join(self.items)}")
 
     def cog_unload(self):
         """Cancel the background tasks when the cog is unloaded."""
