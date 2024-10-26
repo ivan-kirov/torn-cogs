@@ -13,6 +13,7 @@ class ItemMonitor(commands.Cog):
         self.bot = bot
         self.market_channel_id = None  # Channel ID to send market alerts
         self.check_interval = 21600  # Default to 6 hours in seconds
+        self.api_key = None  # Placeholder for API key
 
         # Set locale for number formatting
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -32,7 +33,11 @@ class ItemMonitor(commands.Cog):
 
     async def fetch_market_value(self, item_id):
         """Fetches the average market value and first listing price for a given item ID."""
-        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key=YOUR_API_KEY&id={item_id}&offset=0"
+        if not self.api_key:
+            logging.error("API key is not set.")
+            return None, None, None
+            
+        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key={self.api_key}&id={item_id}&offset=0"
         try:
             response = requests.get(url)
             data = response.json()
@@ -41,19 +46,20 @@ class ItemMonitor(commands.Cog):
             
             average_price = item.get("average_price")
             first_listing_price = listings[0]["price"] if listings else None
+            item_name = item.get("name", "Unknown Item")  # Get the item name
 
-            return average_price, first_listing_price
+            return average_price, first_listing_price, item_name
 
         except Exception as e:
             logging.error(f"Error fetching data for item {item_id}: {e}")
-            return None, None
+            return None, None, None
 
     async def check_market_values(self):
         """Checks if the first listing price for each item is below the average market value."""
         await self.bot.wait_until_ready()
         while True:
             for item_id in self.items:
-                average_price, first_listing_price = await self.fetch_market_value(item_id)
+                average_price, first_listing_price, item_name = await self.fetch_market_value(item_id)
 
                 if first_listing_price is not None and average_price is not None:
                     # Format the prices for readability
@@ -64,9 +70,8 @@ class ItemMonitor(commands.Cog):
                         channel = discord.utils.get(self.bot.get_all_channels(), id=self.market_channel_id)
                         if channel:
                             message = (
-                                f"Alert: The first listing price for item ID {item_id} is **${formatted_first_listing_price}**, "
+                                f"Alert: The first listing price for **{item_name}** (ID: {item_id}) is **${formatted_first_listing_price}**, "
                                 f"which is lower than the average market price of **${formatted_average_price}**."
-                                f"To withdraw money please click here https://www.torn.com/properties.php#/p=options&tab=vault"
                             )
                             await channel.send(message)
             await asyncio.sleep(self.check_interval)  # Use the configured interval
@@ -93,6 +98,33 @@ class ItemMonitor(commands.Cog):
             return
         self.check_interval = hours * 3600  # Convert hours to seconds
         await ctx.send(f"Check interval set to {hours} hours.")
+
+    @item.command(name='setapikey')
+    @checks.is_owner()
+    async def set_api_key(self, ctx, api_key: str):
+        """Sets the API key for Torn API requests."""
+        self.api_key = api_key
+        await ctx.send("API key has been set.")
+
+    @item.command(name='additem')
+    @checks.is_owner()
+    async def add_item(self, ctx, item_id: int):
+        """Adds an item ID to the monitoring list."""
+        if item_id not in self.items:
+            self.items.append(item_id)
+            await ctx.send(f"Item ID {item_id} has been added to the monitoring list.")
+        else:
+            await ctx.send(f"Item ID {item_id} is already being monitored.")
+
+    @item.command(name='removeitem')
+    @checks.is_owner()
+    async def remove_item(self, ctx, item_id: int):
+        """Removes an item ID from the monitoring list."""
+        if item_id in self.items:
+            self.items.remove(item_id)
+            await ctx.send(f"Item ID {item_id} has been removed from the monitoring list.")
+        else:
+            await ctx.send(f"Item ID {item_id} is not being monitored.")
 
     def cog_unload(self):
         """Cancel the background tasks when the cog is unloaded."""
