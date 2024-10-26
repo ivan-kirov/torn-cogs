@@ -136,7 +136,7 @@ class ItemMonitor(commands.Cog):
     @item.command(name='listitems')
     async def list_items(self, ctx):
         """Lists all monitored item IDs."""
-         if self.items:
+        if self.items:
             item_ids = list(self.items.keys())
             logger.info(f"Currently monitoring item IDs: {item_ids}")
             await ctx.send(f"Currently monitoring the following item IDs: {', '.join(item_ids)}")
