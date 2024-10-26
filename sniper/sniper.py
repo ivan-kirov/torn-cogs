@@ -13,6 +13,7 @@ class ItemMonitor(commands.Cog):
         self.bot = bot
         self.market_channel_id = None  # Channel ID to send market alerts
         self.items = self.load_item_data() or []  # Initialize item data
+        self.check_interval = 21600  # Default check interval set to 6 hours (21600 seconds)
 
         # Set up logging
         self.log_file_path = 'torn_item_monitor.log'
@@ -71,17 +72,17 @@ class ItemMonitor(commands.Cog):
                         if channel:
                             item_name = await self.get_item_name(item_id)  # Fetch the item name
                             message = (
-                                f"Alert: The first listing price for '{item_name}' (ID: {item_id}) is {first_listing_price:,}, "
-                                f"which is lower than the average market price of {average_price:,}."
+                                f"Alert: The first listing price for **{item_name}** (ID: {item_id}) is **{first_listing_price:,}**, "
+                                f"which is lower than the average market price of **{average_price:,}**."
                             )
                             await channel.send(message)
                             logging.info(f"Alert sent for item {item_id}: {message}")
-            await asyncio.sleep(21600)  # Run every 6 hours
+            await asyncio.sleep(self.check_interval)  # Use the configured check interval
 
     async def get_item_name(self, item_id):
         """Fetch the item name for a given item ID."""
-        # Dummy implementation; replace with actual API call or item name lookup.
-        return f"Item Name for ID {item_id}"
+        # This would be replaced by an actual API call or a lookup method
+        return f"Item Name for ID {item_id}"  # Placeholder for item name
 
     @commands.group()
     async def item(self, ctx):
@@ -105,28 +106,26 @@ class ItemMonitor(commands.Cog):
 
         if item_id not in self.items:
             self.items.append(item_id)
-            await ctx.send(f"Item ID {item_id} has been added to monitoring.")
+            await ctx.send(f"Item ID **{item_id}** has been added to monitoring.")
             logging.info(f"Item ID {item_id} added. New monitored items: {self.items}")
         else:
-            await ctx.send(f"Item ID {item_id} is already being monitored.")
+            await ctx.send(f"Item ID **{item_id}** is already being monitored.")
 
     @item.command(name='listitems')
     async def list_items(self, ctx):
         """Lists all monitored item IDs."""
         if self.items:
             item_list = ", ".join(self.items)  # Join the items properly
-            await ctx.send(f"Currently monitored item IDs: {item_list}")
+            await ctx.send(f"Currently monitored item IDs: **{item_list}**")
         else:
             await ctx.send("No items are being monitored.")
-
 
     @item.command(name='setcheckinterval')
     @checks.is_owner()
     async def set_check_interval(self, ctx, interval: int):
         """Sets the check interval in seconds."""
-        # You would need to modify the check_market_values to use this interval.
         self.check_interval = interval
-        await ctx.send(f"Check interval set to {interval} seconds.")
+        await ctx.send(f"Check interval set to **{interval} seconds**.")
         logging.info(f"Check interval set to {interval} seconds.")
 
     def cog_unload(self):
