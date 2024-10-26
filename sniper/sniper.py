@@ -4,6 +4,9 @@ import requests
 import json
 import logging
 import locale
+import asyncio  # Added asyncio import
+
+logging.basicConfig(level=logging.INFO)  # Set up logging
 
 class ItemMonitor(commands.Cog):
     """Cog for monitoring Torn API item market values."""
