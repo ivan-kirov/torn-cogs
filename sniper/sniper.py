@@ -11,10 +11,38 @@ class ItemMonitor(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.market_channel_id = None  # Channel ID to send market alerts
+        self.api_key = self.load_api_key()  # Load API key from file
 
         # Initialize item data
         self.items = self.load_item_data()
         self._market_task = self.bot.loop.create_task(self.check_market_values())
+
+    def load_api_key(self):
+        """Load the API key from a JSON file or create it if it doesn't exist."""
+        file_path = '/home/minecraft/redenv/config.json'
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                config = json.load(f)
+            return config.get("api_key")
+        else:
+            # Create a new file if it doesn't exist
+            with open(file_path, 'w') as f:
+                json.dump({"api_key": ""}, f)
+            return ""
+
+    def save_api_key(self, api_key):
+        """Save the API key to a JSON file."""
+        file_path = '/home/minecraft/redenv/config.json'
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                config = json.load(f)
+        else:
+            config = {}
+
+        config["api_key"] = api_key
+
+        with open(file_path, 'w') as f:
+            json.dump(config, f)
 
     def load_item_data(self):
         """Load item data from the JSON file or create it if it doesn't exist."""
@@ -31,7 +59,7 @@ class ItemMonitor(commands.Cog):
 
     async def fetch_market_value(self, item_id):
         """Fetches the average market value and first listing price for a given item ID."""
-        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key=YOUR_API_KEY&id={item_id}&offset=0"
+        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key={self.api_key}&id={item_id}&offset=0"
         try:
             response = requests.get(url)
             data = response.json()
@@ -68,10 +96,11 @@ class ItemMonitor(commands.Cog):
     @commands.group()
     async def item(self, ctx):
         """Group command for Torn API item monitoring related commands.
-        
+
         Available commands:
         - !item setmarketchannel <channel>: Sets the channel to send market alerts.
         - !item setitemids <item_id1> <item_id2> ...: Sets the item IDs to monitor.
+        - !item setapikey <api_key>: Sets the API key for Torn API requests.
         """
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid item command passed...')
@@ -107,6 +136,14 @@ class ItemMonitor(commands.Cog):
         self.items = data.get("item_ids", [])
         
         await ctx.send(f"Item IDs set to: {', '.join(self.items)}")
+
+    @item.command(name='setapikey')
+    @checks.is_owner()
+    async def set_api_key(self, ctx, api_key: str):
+        """Sets the API key for Torn API requests."""
+        self.api_key = api_key
+        self.save_api_key(api_key)
+        await ctx.send("API key has been set successfully.")
 
     def cog_unload(self):
         """Cancel the background tasks when the cog is unloaded."""
