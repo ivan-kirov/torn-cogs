@@ -13,7 +13,8 @@ class ItemMonitor(commands.Cog):
         self.bot = bot
         self.market_channel_id = None  # Channel ID to send market alerts
         self.items = self.load_item_data() or []  # Initialize item data
-        self.check_interval = 21600  # Default check interval set to 6 hours (21600 seconds)
+        self.check_interval = 5  # Default check interval set to 6 hours (21600 seconds)
+        self.api_key = None  # API key placeholder
 
         # Set up logging
         self.log_file_path = 'torn_item_monitor.log'
@@ -42,7 +43,7 @@ class ItemMonitor(commands.Cog):
 
     async def fetch_market_value(self, item_id):
         """Fetches the average market value and first listing price for a given item ID."""
-        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key=YOUR_API_KEY&id={item_id}&offset=0"
+        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key={self.api_key}&id={item_id}&offset=0"
         try:
             response = requests.get(url)
             data = response.json()
@@ -98,6 +99,14 @@ class ItemMonitor(commands.Cog):
         await ctx.send(f"Market alerts will be sent to channel: {channel.mention}")
         logging.info(f"Market channel set to: {channel.mention}")
 
+    @item.command(name='setapi')
+    @checks.is_owner()
+    async def set_api(self, ctx, api_key: str):
+        """Sets the Torn API key."""
+        self.api_key = api_key
+        await ctx.send("API key has been set.")
+        logging.info("API key has been set.")
+
     @item.command(name='additem')
     @checks.is_owner()
     async def add_item(self, ctx, item_id: str):
@@ -111,12 +120,26 @@ class ItemMonitor(commands.Cog):
         else:
             await ctx.send(f"Item ID **{item_id}** is already being monitored.")
 
+    @item.command(name='removeitem')
+    @checks.is_owner()
+    async def remove_item(self, ctx, item_id: str):
+        """Removes an item ID from monitoring."""
+        logging.info(f"Trying to remove item ID: {item_id}")
+
+        if item_id in self.items:
+            self.items.remove(item_id)
+            await ctx.send(f"Item ID **{item_id}** has been removed from monitoring.")
+            logging.info(f"Item ID {item_id} removed. Remaining monitored items: {self.items}")
+        else:
+            await ctx.send(f"Item ID **{item_id}** is not being monitored.")
+
     @item.command(name='listitems')
     async def list_items(self, ctx):
         """Lists all monitored item IDs."""
-        if self.items:
-            item_list = ", ".join(self.items)  # Join the items properly
-            await ctx.send(f"Currently monitored item IDs: **{item_list}**")
+         if self.items:
+            item_ids = list(self.items.keys())
+            logger.info(f"Currently monitoring item IDs: {item_ids}")
+            await ctx.send(f"Currently monitoring the following item IDs: {', '.join(item_ids)}")
         else:
             await ctx.send("No items are being monitored.")
 
