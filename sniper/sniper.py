@@ -3,6 +3,7 @@ from redbot.core import commands, checks
 import requests
 import json
 import logging
+import asyncio
 
 class ItemMonitor(commands.Cog):
     """Cog for monitoring Torn API item market values."""
@@ -11,9 +12,8 @@ class ItemMonitor(commands.Cog):
         self.bot = bot
         self.market_channel_id = None  # Channel ID to send market alerts
         self.check_interval = 21600  # Default check interval in seconds (6 hours)
-
-        # Initialize item data
-        self.items = self.load_item_data()
+        self.api_key = None  # Initialize API key
+        self.items = self.load_item_data()  # Load item data from JSON
         self._market_task = self.bot.loop.create_task(self.check_market_values())
 
     def load_item_data(self):
@@ -27,7 +27,7 @@ class ItemMonitor(commands.Cog):
 
     async def fetch_market_value(self, item_id):
         """Fetches the average market value and first listing price for a given item ID."""
-        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key=YOUR_API_KEY&id={item_id}&offset=0"
+        url = f"https://api.torn.com/v2/market/?selections=itemmarket&key={self.api_key}&id={item_id}&offset=0"
         try:
             response = requests.get(url)
             data = response.json()
@@ -83,6 +83,41 @@ class ItemMonitor(commands.Cog):
         """Sets the check interval in seconds."""
         self.check_interval = seconds
         await ctx.send(f"Check interval has been set to {seconds} seconds.")
+
+    @item.command(name='setapikey')
+    @checks.is_owner()
+    async def set_api_key(self, ctx, api_key: str):
+        """Sets the API key for Torn API."""
+        self.api_key = api_key
+        await ctx.send("API key has been set.")
+
+    @item.command(name='additem')
+    @checks.is_owner()
+    async def add_item(self, ctx, item_id: str):
+        """Adds an item ID to monitor."""
+        if item_id not in self.items:
+            self.items.append(item_id)
+            await ctx.send(f"Item ID {item_id} has been added to monitoring.")
+        else:
+            await ctx.send(f"Item ID {item_id} is already being monitored.")
+
+    @item.command(name='removeitem')
+    @checks.is_owner()
+    async def remove_item(self, ctx, item_id: str):
+        """Removes an item ID from monitoring."""
+        if item_id in self.items:
+            self.items.remove(item_id)
+            await ctx.send(f"Item ID {item_id} has been removed from monitoring.")
+        else:
+            await ctx.send(f"Item ID {item_id} is not being monitored.")
+
+    @item.command(name='listitems')
+    async def list_items(self, ctx):
+        """Lists all monitored item IDs."""
+        if self.items:
+            await ctx.send("Currently monitored item IDs: " + ", ".join(self.items))
+        else:
+            await ctx.send("No items are being monitored.")
 
     def cog_unload(self):
         """Cancel the background tasks when the cog is unloaded."""
