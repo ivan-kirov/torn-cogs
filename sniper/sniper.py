@@ -3,10 +3,8 @@ from redbot.core import commands, checks
 import requests
 import json
 import logging
-import locale
-import asyncio  # Added asyncio import
-
-logging.basicConfig(level=logging.INFO)  # Set up logging
+import os
+import asyncio  # Make sure to import asyncio
 
 class ItemMonitor(commands.Cog):
     """Cog for monitoring Torn API item market values."""
@@ -20,9 +18,19 @@ class ItemMonitor(commands.Cog):
         self._market_task = self.bot.loop.create_task(self.check_market_values())
 
     def load_item_data(self):
-        """Load item data from the JSON file."""
-        # Update this path to your specific environment
-        with open('/home/minecraft/redenv/item_data.json', 'r') as f:
+        """Load item data from the JSON file or create it if it doesn't exist."""
+        file_path = '/home/minecraft/redenv/item_data.json'
+        
+        # Check if the file exists
+        if not os.path.exists(file_path):
+            # Create a new file with default content
+            default_data = {}
+            with open(file_path, 'w') as f:
+                json.dump(default_data, f)
+            logging.info("item_data.json created with default content.")
+        
+        # Load the data from the file
+        with open(file_path, 'r') as f:
             return json.load(f)
 
     async def fetch_market_value(self, item_id):
